@@ -1,0 +1,67 @@
+# This script is for displaying the gain compensated energy
+#7/29/19
+
+import threading
+import time
+import decimal
+
+def parse_energies(file_nme,av_num,gain):
+	col_dat = []
+	f = open(file_nme,'r')
+	A = f.readline()
+	flag = 0;
+	iter = 1;
+	while A != '' and flag == 0: 
+		if A.find('Timestamp') != -1:
+			sze = len(f.readline())
+			flag = 1
+		A = f.readline()
+		iter = iter + 1
+	f.seek(0,2)
+	pos = f.tell()
+	num_nl = 0
+	iter = 1;
+	while num_nl <= av_num:
+		if pos-iter < 0:
+			return('not enough data points')
+		f.seek(pos-iter,0)
+		nl = f.read(1)
+		f.seek(pos-iter,0)
+		if nl == '\n':
+			num_nl = num_nl + 1
+			iter = iter + 1
+		iter = iter + 1
+	A = f.read()
+	A = A.strip('\n')
+	A = A.replace('\n','')
+	A = A.replace(' ','')
+	A = A.split('\t')
+	
+	if len(A) < av_num*2:
+		return('Fail: No Final Energy Measurement')
+		
+	val = 0
+	for x in range(1,(av_num)*2,2):
+		tmp = float(A[x-1])
+		if tmp >= 1:
+			val = val + float(A[x])
+		else:
+			return('Fail: Recorded Value is Time')
+	return((val/av_num)*gain*1000)
+	f.close()
+
+file_nme = input("Enter the file name: ") 
+print(file_nme);
+av_num = int(input("Enter the number of data points to average over: "))
+gain = float(input("Enter the desired gain: "))
+start_time = decimal.Decimal(time.perf_counter())
+iter = 3
+title = 'Time[s]\t\tAverage({} Samples, mJ)'
+print(title.format(av_num))
+str = '{:.4}\t\t{:.4}'
+while True:
+	now_time = decimal.Decimal(time.perf_counter())
+	if round(now_time) - round(start_time) >= 3:
+		print(str.format(iter/60,parse_energies(file_nme,av_num,gain)))
+		iter = iter + 3
+		start_time = now_time
