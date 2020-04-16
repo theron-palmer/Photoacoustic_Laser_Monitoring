@@ -1,0 +1,36 @@
+#This script is for calculating the gain from the internal to the external energy meter
+#7/29/19
+
+import decimal
+import numpy as np
+import statistics as st
+
+
+file_nme = input("Enter the file name: ") 
+print(file_nme)
+f = open(file_nme,'r')
+A = f.readline()
+flag = 0;
+vals_ext = []
+vals_int = []
+timestamp = []
+while A != '' and flag == 0: 
+	if A.find('Timestamp') != -1:
+		sze = len(f.readline())
+		flag = 1
+	A = f.readline()
+
+while A != '':
+	A = A.strip('\n')
+	A = A.replace(' ','')
+	A = A.split('\t')
+	if A[1] == '':
+		vals_int.append(float(A[2]))
+	elif A[2] == '':
+		vals_ext.append(float(A[1]))
+	A = f.readline()
+
+mean_ext = st.mean(vals_ext)
+mean_int = st.mean(vals_int)
+str = 'Gain : {}'
+print(str.format(mean_ext/mean_int))
